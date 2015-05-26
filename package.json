@@ -1,0 +1,20 @@
+{
+  "name": "hpms-aws-ec2-autodeploy",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "dependencies": {
+    "aws-sdk": "^2.1.30",
+    "lodash": "^3.9.2",
+    "moment": "^2.10.3",
+    "q": "^1.4.1",
+    "ssh-exec": "^1.1.0",
+    "ssh2": "^0.4.8"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Mathieu Gardere",
+  "license": "ISC"
+}
