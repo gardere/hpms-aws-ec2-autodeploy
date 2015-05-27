@@ -12,8 +12,8 @@ var EC2_INSTANCE_TYPE = 'c4.4xlarge';
 //var EC2_INSTANCE_TYPE = 'c4.8xlarge';
 
 var config = new AWS.Config({
-  accessKeyId: 'AKIAI6KB5GCGHPQ2EMOA',
-  secretAccessKey: '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',
+  accessKeyId: 'XXXXXXXX',
+  secretAccessKey: 'XXXXXXXX',
   region: 'us-west-2'
 });
 

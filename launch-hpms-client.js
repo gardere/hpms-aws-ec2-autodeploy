@@ -75,32 +75,6 @@ function retrieveInstancePublicIP() {
   });
 }
 
-function waitBeforeSSHing() {
-  var counter = 0;
-  var intervalTimer;
-  var deferred = q.defer();
-
-  process.stdout.write('Waiting before running setup script');
-  intervalTimer = setInterval(function() {
-    if (++counter === 120) {
-      process.stdout.write('\n');
-      clearInterval(intervalTimer);
-      deferred.resolve();
-    } else {
-      process.stdout.write('.');
-    }
-  }, 1000);
-
-  return deferred.promise;
-}
-
-function runSetupScript() {
-  console.log('Customizing EC2 instance.');
-  try {
-    require('child_process').execSync('ssh -t -t -i ' + KEY_FILENAME + ' -o StrictHostKeyChecking=no ec2-user@' + AWS_EC2_INSTANCE_PUBLIC_IP + ' "sudo yum -y provides /usr/bin/ab; sudo yum -y install httpd-tools; echo \'ab -n 150000 -c 100  http://' + argv.s + ':4321/%7B%22type%22:%20%22myEventType%22,%20%22val1%22:%203,%20%22val2%22:%20%22abcd%22%20%7D\' > start_stress_test.sh; chmod +755 start_stress_test.sh; exit;"');
-  } catch (e) {}
-  console.log('\nSetup completed.');
-}
 
 function displaySuccessMessage() {
   console.log('\nInstance launched, set up and running!!!');
@@ -181,11 +155,18 @@ function retrieveImageId() {
 }
 
 function createAndLaunchInstance() {
+  var setupData = fs.readFileSync('hpms-client-setup-script.sh').toString();
+  setupData = setupData.replace('REPLACE_THIS', argv.s);
+  console.log('setup data');
+  console.log(setupData);
+
   return awsHelpers.createAndLaunchInstance({
     image_id: AWS_EC2_IMAGE_ID,
     instance_type: EC2_INSTANCE_TYPE,
     key_name: KEY_NAME,
-    security_group_ids: [SECURITY_GROUP_ID]
+    security_group_ids: [SECURITY_GROUP_ID],
+    number_of_instances: 1,
+    additional_setup_data: setupData
   }).
   then(function(instanceId) {
     console.log('Instance created and launched');
@@ -195,7 +176,7 @@ function createAndLaunchInstance() {
 }
 
 function init() {
-  awsHelpers.configure(fs.readFileSync('aws_config.json'));
+  awsHelpers.configure(JSON.parse(fs.readFileSync('aws_config.json')));
   ec2 = new AWS.EC2({
     apiVersion: '2015-04-15'
   });
@@ -207,8 +188,6 @@ function run() {
   then(retrieveImageId).
   then(createAndLaunchInstance).
   then(retrieveInstancePublicIP).
-  then(waitBeforeSSHing).
-  then(runSetupScript).
   then(displaySuccessMessage).
   fail(function(err) {
     err = err || {};

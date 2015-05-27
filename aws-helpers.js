@@ -84,14 +84,20 @@ function retrieveImageId(options) {
 function createAndLaunchInstance(options) {
   var deferred = q.defer();
 
-      console.log(options)
+  var userData;
+
+  if (options.additional_setup_data) {
+    userData = new Buffer(options.additional_setup_data).toString('base64');
+  }
+
   var params = {
     ImageId: options.image_id,
-    MaxCount: 1,
-    MinCount: 1,
+    MaxCount: options.number_of_instances || 1,
+    MinCount: options.number_of_instances || 1,
     InstanceType: options.instance_type,
     KeyName: options.key_name,
-    SecurityGroupIds: options.security_group_ids
+    SecurityGroupIds: options.security_group_ids,
+    UserData: userData
   };
 
   getEc2().runInstances(params, function(err, data) {
