@@ -1,3 +1,5 @@
+#!/usr/bin/env node 
+
 var AWS = require('aws-sdk');
 var moment = require('moment');
 var q = require('q');
@@ -6,12 +8,12 @@ var _ = require('lodash');
 var sshExec = require('ssh-exec');
 
 var AWS_IMAGE_NAME = 'amzn-ami-hvm-2015.03.0.x86_64-gp2';
-var EC2_INSTANCE_TYPE = 't2.micro';
+var EC2_INSTANCE_TYPE = 'c4.4xlarge';
 //var EC2_INSTANCE_TYPE = 'c4.8xlarge';
 
 var config = new AWS.Config({
-  accessKeyId: 'XXXXXXXX',
-  secretAccessKey: 'XXXXXXX',
+  accessKeyId: 'AKIAI6KB5GCGHPQ2EMOA',
+  secretAccessKey: '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',
   region: 'us-west-2'
 });
 
@@ -234,5 +236,5 @@ then(createAndLaunchInstance).
 then(retrieveInstancePublicIP).
 then(waitBeforeSSHing).
 then(runSetupScript).
-then(displaySuccessMessage, displaySuccessMessage);
+then(displaySuccessMessage);
 

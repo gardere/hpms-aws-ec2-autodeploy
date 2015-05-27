@@ -5,14 +5,17 @@
   "main": "main.js",
   "dependencies": {
     "aws-sdk": "^2.1.30",
-    "lodash": "^3.9.2",
+    "lodash": "^3.9.3",
     "moment": "^2.10.3",
+    "prompt": "^0.2.14",
     "q": "^1.4.1",
     "ssh-exec": "^1.1.0",
-    "ssh2": "^0.4.8"
+    "ssh2": "^0.4.8",
+    "yargs": "^3.9.1"
   },
   "devDependencies": {},
   "scripts": {
+    "postinstall": "node create-aws-conf.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Mathieu Gardere",
