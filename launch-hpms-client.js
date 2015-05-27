@@ -26,7 +26,12 @@ var options = {
   port_list: [22],
   security_group_name: 'Stress test client security group',
   setup_data: setupData,
-  instances_count: argv.c
+  instances_count: argv.c,
+  instance_type: argv.i,
+  tags: {
+    type: 'stress-test-client',
+    version: '1.0'
+  }
 };
 
 require('./launch-hpms-instance.js').launchHpmsInstance(options).

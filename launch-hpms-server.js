@@ -13,7 +13,12 @@ var argv = require('yargs')
 var options = {
   port_list: [4321, 3001, 15672, 22],
   security_group_name: 'HPMS server security group',
-  setup_data: 'curl -s https://gist.githubusercontent.com/gardere/631bce85dfbd438cfa1a/raw/264d59527d2848153075fa5923847ebae17ef5c5/aws-hpms-setup.sh | bash'
+  setup_data: '#!/bin/bash\ncurl -s https://gist.githubusercontent.com/gardere/631bce85dfbd438cfa1a/raw/6eccd503636964b362c0ee40ec65fac3983c7dc9/aws-hpms-setup.sh | bash',
+  instance_type: argv.i,
+  tags: {
+    type: 'hpms-server',
+    version: '1.0'
+  }
 };
 
 require('./launch-hpms-instance.js').launchHpmsInstance(options).

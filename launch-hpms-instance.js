@@ -5,13 +5,6 @@ var fs = require('fs');
 var _ = require('lodash');
 var awsHelpers = require('./aws-helpers.js');
 
-var argv = require('yargs')
-  .nargs('i', 1)
-  .alias('i', 'instance-type')
-  .describe('i', 'AWS instance type')
-  .default('i', 't2.micro')
-  .argv;
-
 var AWS_IMAGE_NAME = 'amzn-ami-hvm-2015.03.0.x86_64-gp2';
 var EC2_INSTANCE_TYPE = 't2.micro';
 
@@ -25,6 +18,7 @@ var SECURITY_GROUP_ID;
 var AWS_EC2_IMAGE_ID;
 var AWS_EC2_INSTANCE_ID;
 var AWS_EC2_INSTANCE_PUBLIC_IP;
+var NUMBER_OF_INSTANCES;
 
 var PORT_LIST;
 
@@ -41,7 +35,7 @@ function addSecurityRules() {
 
 function retrieveInstancePublicIP() {
   return awsHelpers.retrieveInstancePublicIP({
-    AWS_EC2_INSTANCE_ID: AWS_EC2_INSTANCE_ID
+    instanceId: AWS_EC2_INSTANCE_ID
   }).
   then(function(publicIp) {
     console.log('Instance is running!');
@@ -130,7 +124,7 @@ function createAndLaunchInstance() {
     instance_type: EC2_INSTANCE_TYPE,
     key_name: KEY_NAME,
     security_group_ids: [SECURITY_GROUP_ID],
-    number_of_instances: 1,
+    number_of_instances: NUMBER_OF_INSTANCES,
     additional_setup_data: SETUP_DATA
   }).
   then(function(instanceId) {
@@ -138,6 +132,15 @@ function createAndLaunchInstance() {
     console.log(instanceId);
     AWS_EC2_INSTANCE_ID = instanceId;
   });
+}
+
+function addTags() {
+  if (AWS_EC2_INSTANCE_TAGS) {
+    awsHelpers.addTags({
+      instanceId: AWS_EC2_INSTANCE_ID,
+      tags: AWS_EC2_INSTANCE_TAGS
+    });
+  }
 }
 
 function init() {
@@ -152,6 +155,7 @@ function run() {
   then(checkSecurityGroup).
   then(retrieveImageId).
   then(createAndLaunchInstance).
+  then(addTags).
   then(retrieveInstancePublicIP).
   then(function () {
     return {
@@ -168,7 +172,9 @@ function launchHpmsInstance(options) {
   PORT_LIST = options.port_list;
   SECURITY_GROUP_NAME = options.security_group_name;
   SETUP_DATA = options.setup_data;
-  EC2_INSTANCE_TYPE = argv.i || EC2_INSTANCE_TYPE;
+  EC2_INSTANCE_TYPE = options.instance_type || EC2_INSTANCE_TYPE;
+  NUMBER_OF_INSTANCES = options.instances_count || NUMBER_OF_INSTANCES;
+  AWS_EC2_INSTANCE_TAGS = options.tags;
   init();
   return run();
 }

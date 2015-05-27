@@ -146,11 +146,39 @@ function addSecurityIngress(options) {
     params.IpPermissions.push(getEc2AllIpsInForPort(options.portList[i]));
   }
 
-  ec2.authorizeSecurityGroupIngress(params, function(err, data) {
+  getEc2().authorizeSecurityGroupIngress(params, function(err, data) {
     if (err) {
       console.log('Could not add Security Rules to Security Group');
       console.log(err, err.stack);
       deferred.reject();
+    } else {
+      deferred.resolve();
+    }
+  });
+
+  return deferred.promise;
+}
+
+function addTags(options) {
+  var deferred = q.defer();
+
+  var tagsKeys = _.keys(options.tags);
+
+  params = {
+    Resources: [options.instanceId],
+    Tags: []
+  };
+
+  for (var i = 0; i < tagsKeys.length; i += 1) {
+    params.Tags.push({
+      Key: tagsKeys[i],
+      Value: options.tags[tagsKeys[i]]
+    });
+  }
+
+  getEc2().createTags(params, function(err) {
+    if (err) {
+      deferred.reject(err);
     } else {
       deferred.resolve();
     }
@@ -189,3 +217,4 @@ module.exports.retrieveImageId = retrieveImageId;
 module.exports.createAndLaunchInstance = createAndLaunchInstance;
 module.exports.retrieveInstancePublicIP = retrieveInstancePublicIP;
 module.exports.addSecurityIngress = addSecurityIngress;
+module.exports.addTags = addTags;
