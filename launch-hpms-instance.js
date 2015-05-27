@@ -5,6 +5,12 @@ var fs = require('fs');
 var _ = require('lodash');
 var awsHelpers = require('./aws-helpers.js');
 
+var argv = require('yargs')
+  .nargs('i', 1)
+  .alias('i', 'instance-type')
+  .describe('i', 'AWS instance type')
+  .default('i', 't2.micro')
+  .argv;
 
 var AWS_IMAGE_NAME = 'amzn-ami-hvm-2015.03.0.x86_64-gp2';
 var EC2_INSTANCE_TYPE = 't2.micro';
@@ -149,7 +155,7 @@ function run() {
   then(retrieveInstancePublicIP).
   then(function () {
     return {
-      instancePublicIp: AWS_EC2_INSTANCE_PUBLIC_IP
+      instance_public_ip: AWS_EC2_INSTANCE_PUBLIC_IP
     };
   })
   fail(function(err) {
@@ -159,9 +165,10 @@ function run() {
 }
 
 function launchHpmsInstance(options) {
-  PORT_LIST = options.portList;
-  SECURITY_GROUP_NAME = options.securityGroupName;
-  SETUP_DATA = options.setupData;
+  PORT_LIST = options.port_list;
+  SECURITY_GROUP_NAME = options.security_group_name;
+  SETUP_DATA = options.setup_data;
+  EC2_INSTANCE_TYPE = argv.i || EC2_INSTANCE_TYPE;
   init();
   return run();
 }
