@@ -32,7 +32,7 @@ var PORT_LIST;
 function addSecurityRules() {
   return awsHelpers.addSecurityIngress({
     securityGroupId: SECURITY_GROUP_ID,
-    portList: [22]
+    portList: PORT_LIST
   }).
   then(function() {
     console.log('Security Rules added!');
