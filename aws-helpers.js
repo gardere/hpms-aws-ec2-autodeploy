@@ -32,7 +32,7 @@ function createKeyPair(options) {
   return deferred.promise;
 }
 
-function createSecurityGroup() {
+function createSecurityGroup(options) {
   var deferred = q.defer();
 
   var params = {
@@ -134,6 +134,42 @@ function retrieveInstancePublicIP(options) {
   return deferred.promise;
 }
 
+function addSecurityIngress(options) {
+  var deferred = q.defer();
+
+  var params = {
+    GroupId: options.securityGroupId,
+    IpPermissions: []
+  };
+
+  for (var i = 0; i < options.portList.length; i += 1) {
+    params.IpPermissions.push(getEc2AllIpsInForPort(options.portList[i]));
+  }
+
+  ec2.authorizeSecurityGroupIngress(params, function(err, data) {
+    if (err) {
+      console.log('Could not add Security Rules to Security Group');
+      console.log(err, err.stack);
+      deferred.reject();
+    } else {
+      deferred.resolve();
+    }
+  });
+
+  return deferred.promise;
+}
+
+function getEc2AllIpsInForPort(portNumber) {
+  return {
+    FromPort: portNumber,
+    IpProtocol: 'tcp',
+    IpRanges: [{
+      CidrIp: '0.0.0.0/0'
+    }],
+    ToPort: portNumber
+  };
+}
+
 function configure(options) {
   AWS.config = new AWS.Config({
     accessKeyId: options.access_key_id,
@@ -152,3 +188,4 @@ module.exports.createSecurityGroup = createSecurityGroup;
 module.exports.retrieveImageId = retrieveImageId;
 module.exports.createAndLaunchInstance = createAndLaunchInstance;
 module.exports.retrieveInstancePublicIP = retrieveInstancePublicIP;
+module.exports.addSecurityIngress = addSecurityIngress;
