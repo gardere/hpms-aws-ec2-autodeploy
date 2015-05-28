@@ -35,40 +35,43 @@ function retrieveServerIp(options) {
 }
 
 function startTests(options) {
-	if (typeof options.serverIp === 'undefined') {
-		throw 'Server IP address was not found';
-	}
-	if (options.clientsIps.length === 0) {
-		throw 'No test clients available';
-	}
+  if (typeof options.serverIp === 'undefined') {
+    throw 'Server IP address was not found';
+  }
+  if (options.clientsIps.length === 0) {
+    throw 'No test clients available';
+  }
 
-	console.log('Server targeted: ' + options.serverIp);
-	console.log('Starting stress test from ' + options.clientsIps.length + ' client(s):\n* ' + options.clientsIps.join('\n* '));
+  console.log('Server targeted: ' + options.serverIp);
+  console.log('Starting stress test from ' + options.clientsIps.length + ' client(s):\n* ' + options.clientsIps.join('\n* '));
 
-	for (var i=0; i < options.clientsIps.length; i+= 1) {
-		startStressTestFromHost(options.clientsIps[i], 'http://' + options.serverIp + ':4321/%7B%22type%22:%20%22myEventType%22,%20%22val1%22:%203,%20%22val2%22:%20%22abcd%22%20%7D');
-	}
+  for (var i = 0; i < options.clientsIps.length; i += 1) {
+    startStressTestFromHost(options.clientsIps[i], 'http://' + options.serverIp + ':4321/%7B%22type%22:%20%22myEventType%22,%20%22val1%22:%203,%20%22val2%22:%20%22abcd%22%20%7D');
+  }
 }
 
 function startStressTestFromHost(source, target) {
-	var deferred = q.defer();
+  var deferred = q.defer();
 
+  var startTestUrl = 'http://' + source + ':7117/st/300/150000/' + encodeURIComponent(target);
 
-	var startTestUrl = 'http://' + source + ':7117/st/300/150000/' + encodeURIComponent(target);
-
-	http.get(startTestUrl, function(response) {
-        // Continuously update stream with data
-        var body = '';
-        response.on('data', function(d) {
-            body += d;
-        });
-        response.on('end', function() {
-        	deferred.resolve(body);
-        	console.log('started test from ' + source);
-        });
+  try {
+    http.get(startTestUrl, function(response) {
+      // Continuously update stream with data
+      var body = '';
+      response.on('data', function(d) {
+        body += d;
+      });
+      response.on('end', function() {
+        deferred.resolve(body);
+        console.log('started test from ' + source);
+      });
     });
+  } catch(err) {
+  	console.log('Error starting tests from ' + source);
+  }
 
-    return deferred.promise;
+  return deferred.promise;
 }
 
 init();
@@ -76,6 +79,6 @@ init();
 retrieveServerIp().
 then(retrieveStressClientsIps).
 then(startTests).
-fail(function (error) {
-	console.log(error);
-});	
+fail(function(error) {
+  console.log(error);
+});
