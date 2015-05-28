@@ -1,6 +1,7 @@
 var AWS = require('aws-sdk');
 var q = require('q');
 var _ = require('lodash');
+var fs = require('fs');
 var ec2;
 
 function getEc2() {
