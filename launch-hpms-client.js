@@ -1,11 +1,7 @@
 #!/usr/bin/env node
 
 var argv = require('yargs')
-  .usage('Usage: $0 --server-ip <SERVER_IP_ADDRESS> --instances-count --instance-type <INSTANCE_TYPE>')
-  .demand('s')
-  .nargs('s', 1)
-  .alias('s', 'server-ip')
-  .describe('s', 'Specify the EC2 HPMS server IP address')
+  .usage('Usage: $0 --instances-count --instance-type <INSTANCE_TYPE>')
   .nargs('c', 1)
   .alias('c', 'instances-count')
   .default('c', 1)
@@ -23,7 +19,7 @@ var setupData = fs.readFileSync('hpms-client-setup-script.sh').toString();
 setupData = setupData.replace('REPLACE_THIS', argv.s);
 
 var options = {
-  port_list: [22],
+  port_list: [22, 7117],
   security_group_name: 'Stress test client security group',
   setup_data: setupData,
   instances_count: argv.c,
@@ -35,9 +31,12 @@ var options = {
 };
 
 require('./launch-hpms-instance.js').launchHpmsInstance(options).
-then(displaySuccessMessage);
+then(displaySuccessMessage).
+fail(function (err) {
+  console.log('error launching client(s): ' + err);
+});
 
 function displaySuccessMessage(result) {
   console.log('\nInstance launched, set up and running!!!');
-  console.log('Public IP: ' + result.instance_public_ip);
+  console.log('Public IPs: ' + result.instance_public_ips);
 }

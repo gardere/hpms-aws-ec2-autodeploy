@@ -1,6 +1,11 @@
 #!/bin/bash
 yum -y provides /usr/bin/ab 
 yum -y install httpd-tools
-export SERVER_IP=REPLACE_THIS
-echo 'ab -n 150000 -c 100  http://${SERVER_IP}:4321/%7B%22type%22:%20%22myEventType%22,%20%22val1%22:%203,%20%22val2%22:%20%22abcd%22%20%7D' > /home/ec2-user/start_stress_test.sh
-chmod +755 /home/ec2-user/start_stress_test.sh
+
+yum install -y nodejs npm --enablerepo=epel
+npm install -g pm2
+
+cd /home/ec2-user
+runuser -l  ec2-user -c 'wget https://gist.githubusercontent.com/gardere/ca9735292c86fce97e22/raw/decb41ae186659529da94bc17f1272a2139a64e6/node-ab-commander.js'
+runuser -l  ec2-user -c 'npm install express'
+runuser -l  ec2-user -c 'pm2 start node-ab-commander.js'

@@ -106,19 +106,64 @@ function createAndLaunchInstance(options) {
       console.log(err, err.stack);
       deferred.reject();
     } else {
-      var instanceId = data.Instances[0].InstanceId;
-      deferred.resolve(instanceId);
+      var instanceIds = [];
+      for (var i = 0; i < data.Instances.length; i += 1) {
+        instanceIds.push(data.Instances[i].InstanceId);
+      }
+      deferred.resolve(instanceIds);
     }
   });
 
   return deferred.promise;
 }
 
-function retrieveInstancePublicIP(options) {
+function retrievePublicIpsMatchingTags(options) {
+  var deferred = q.defer();
+
+  var params = {
+    Filters: []
+  };
+
+  for (var i = 0; i < options.tags.length; i += 1) {
+    var tag = options.tags[i];
+    var tagKey = _.keys(tag)[0];
+    var tagValue = _.values(tag)[0];
+    params.Filters.push({
+      Name: 'tag:' + tagKey,
+      Values: [tagValue]
+    });
+  }
+
+  getEc2().describeInstances(params, function(err, data) {
+      if (err) {
+        console.log('Instance is not running!');
+        console.log(err, err.stack);
+        deferred.reject();
+      } else {
+        var ips = [];
+        for (var i = 0; i < data.Reservations.length; i += 1) {
+          var reservation = data.Reservations[i];
+          for (var j = 0; j < reservation.Instances.length; j += 1) {
+            var instance = reservation.Instances[j];
+            try {
+              ips.push((instance.NetworkInterfaces[0].Association || {}).PublicIp);
+            } catch(err) {
+
+            }
+          }
+        }
+        deferred.resolve(ips);
+      }
+  });
+
+  return deferred.promise;
+}
+
+function retrieveInstancePublicIPs(options) {
   var deferred = q.defer();
 
   getEc2().waitFor('instanceRunning', {
-      InstanceIds: [options.instanceId]
+      InstanceIds: options.instanceIds
     },
     function(err, data) {
       if (err) {
@@ -126,8 +171,16 @@ function retrieveInstancePublicIP(options) {
         console.log(err, err.stack);
         deferred.reject();
       } else {
-        var publicIp = (data.Reservations[0].Instances[0].NetworkInterfaces[0].Association || {}).PublicIp;
-        deferred.resolve(publicIp);
+        var publicIps = [];
+        for (var i = 0; i < data.Reservations.length; i += 1)  {
+          var reservation = data.Reservations[i];
+          for (var j= 0; j < reservation.Instances.length; j +=1 ) {
+            var instance = reservation.Instances[j];
+            var ip = (instance.NetworkInterfaces[0].Association || {}).PublicIp;
+            publicIps.push(ip);
+          }
+        }
+        deferred.resolve(publicIps);
       }
     });
 
@@ -165,7 +218,7 @@ function addTags(options) {
   var tagsKeys = _.keys(options.tags);
 
   params = {
-    Resources: [options.instanceId],
+    Resources: options.instanceIds,
     Tags: []
   };
 
@@ -198,6 +251,8 @@ function getEc2AllIpsInForPort(portNumber) {
   };
 }
 
+
+
 function configure(options) {
   AWS.config = new AWS.Config({
     accessKeyId: options.access_key_id,
@@ -215,6 +270,7 @@ module.exports.createKeyPair = createKeyPair;
 module.exports.createSecurityGroup = createSecurityGroup;
 module.exports.retrieveImageId = retrieveImageId;
 module.exports.createAndLaunchInstance = createAndLaunchInstance;
-module.exports.retrieveInstancePublicIP = retrieveInstancePublicIP;
+module.exports.retrieveInstancePublicIPs = retrieveInstancePublicIPs;
+module.exports.retrievePublicIpsMatchingTags = retrievePublicIpsMatchingTags;
 module.exports.addSecurityIngress = addSecurityIngress;
 module.exports.addTags = addTags;

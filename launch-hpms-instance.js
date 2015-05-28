@@ -16,8 +16,8 @@ var SECURITY_GROUP_NAME;
 
 var SECURITY_GROUP_ID;
 var AWS_EC2_IMAGE_ID;
-var AWS_EC2_INSTANCE_ID;
-var AWS_EC2_INSTANCE_PUBLIC_IP;
+var AWS_EC2_INSTANCE_IDS;
+var AWS_EC2_INSTANCE_PUBLIC_IPS;
 var NUMBER_OF_INSTANCES;
 
 var PORT_LIST;
@@ -33,15 +33,16 @@ function addSecurityRules() {
   });
 }
 
-function retrieveInstancePublicIP() {
-  return awsHelpers.retrieveInstancePublicIP({
-    instanceId: AWS_EC2_INSTANCE_ID
+function retrieveInstancePublicIPs() {
+  return awsHelpers.retrieveInstancePublicIPs({
+    instanceIds: AWS_EC2_INSTANCE_IDS
   }).
-  then(function(publicIp) {
-    console.log('Instance is running!');
-    console.log('Public IP: ' + publicIp);
-    AWS_EC2_INSTANCE_PUBLIC_IP = publicIp;
-    return publicIp;
+  then(function(publicIps) {
+
+    console.log('Instance ' + (publicIps.length > 1) ? 'are' : 'is' + ' running!');
+    console.log('IP(s): ' + publicIps);
+    AWS_EC2_INSTANCE_PUBLIC_IPS = publicIps;
+    return publicIps;
   });
 }
 
@@ -127,18 +128,22 @@ function createAndLaunchInstance() {
     number_of_instances: NUMBER_OF_INSTANCES,
     additional_setup_data: SETUP_DATA
   }).
-  then(function(instanceId) {
+  then(function(instanceIds) {
     console.log('Instance created and launched');
-    console.log(instanceId);
-    AWS_EC2_INSTANCE_ID = instanceId;
+    console.log(instanceIds);
+    AWS_EC2_INSTANCE_IDS = instanceIds;
+    return instanceIds;
   });
 }
 
 function addTags() {
   if (AWS_EC2_INSTANCE_TAGS) {
-    awsHelpers.addTags({
-      instanceId: AWS_EC2_INSTANCE_ID,
+    return awsHelpers.addTags({
+      instanceIds: AWS_EC2_INSTANCE_IDS,
       tags: AWS_EC2_INSTANCE_TAGS
+    }).
+    then(function () {
+      console.log('tags added');
     });
   }
 }
@@ -156,10 +161,10 @@ function run() {
   then(retrieveImageId).
   then(createAndLaunchInstance).
   then(addTags).
-  then(retrieveInstancePublicIP).
+  then(retrieveInstancePublicIPs).
   then(function () {
     return {
-      instance_public_ip: AWS_EC2_INSTANCE_PUBLIC_IP
+      instance_public_ips: AWS_EC2_INSTANCE_PUBLIC_IPS
     };
   })
   fail(function(err) {
